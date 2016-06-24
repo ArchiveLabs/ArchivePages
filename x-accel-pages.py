@@ -13,6 +13,14 @@ def lookup_item(identifier, default):
     """Does an API request to look up an item
     :return URL to the item (eg "ia600206.us.archive.org/14/items/HelloWebpage")
     """
+    # Perform a case-insensitive lookup
+    params = dict(page=1)
+    search_results = internetarchive.search_items('identifier:' + identifier,
+                                                  params=params, config=config)
+    ids = [ r['identifier']  for r in search_results ]
+    if len(ids) > 0:
+        identifier = ids[0]
+
     item = internetarchive.get_item(identifier, config=config)
     if not item.exists:
         return default
