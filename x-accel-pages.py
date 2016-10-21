@@ -1,6 +1,6 @@
 import web
-import urllib2
 import internetarchive
+from lru import lru_cache_function
 
 urls = (
     '/(.*)', 'hello'
@@ -9,18 +9,30 @@ app = web.application(urls, globals())
 
 config = dict(general=dict(secure=False))
 
-def lookup_item(identifier, default):
-    """Does an API request to look up an item
-    :return URL to the item (eg "ia600206.us.archive.org/14/items/HelloWebpage")
-    """
-    # Perform a case-insensitive lookup
+CUSTOM_DOMAINS = {
+    u'experiments.archivelab.org': u'ArchiveExperiments'
+}
+
+
+# Note max_size is number of items, not item size
+@lru_cache_function(max_size=1024, expiration=15*60)
+def lookup_case_insensitive_identifier(identifier):
+    """Perform a case-insensitive lookup"""
     params = dict(page=1)
     search_results = internetarchive.search_items('identifier:' + identifier,
                                                   params=params, config=config)
     ids = [ r['identifier']  for r in search_results ]
     if len(ids) > 0:
         identifier = ids[0]
+    return identifier
 
+
+# Note max_size is number of items, not item size
+@lru_cache_function(max_size=1024, expiration=15*60)
+def lookup_item_base_url(identifier, default):
+    """Does an API request to look up an item
+    :return URL to the item (eg "ia600206.us.archive.org/14/items/HelloWebpage")
+    """
     item = internetarchive.get_item(identifier, config=config)
     if not item.exists:
         return default
@@ -36,20 +48,33 @@ def lookup_item(identifier, default):
     else:
         return default
 
+
 class hello:
-    def GET(self, path):
-        parts = path.split('/')
-        key = parts[0]
-        source = lookup_item(key, None)
-        if source:
-            relative_url = '/'.join(parts[1:])
-            if relative_url == '':
-                relative_url = 'index.html'
-            url = source + '/' + relative_url
-            web.header('x-accel-redirect', "/xaccel/" + url)
-            return 'should not get here'
+    def get_identifier_and_item_path(self, web, request_path):
+        request_path = request_path.strip('/')
+        host = web.ctx.env.get('HTTP_HOST')
+        if host in CUSTOM_DOMAINS:
+            identifier = CUSTOM_DOMAINS[host]
+            item_path = request_path
+        else:
+            parts = request_path.split('/')
+            identifier = parts[0]
+            identifier = lookup_case_insensitive_identifier(identifier)
+            item_path = '/'.join(parts[1:])
+        if item_path == '':
+            item_path = 'index.html'
+        return identifier, item_path
+
+    def GET(self, request_path):
+        identifier, item_path = self.get_identifier_and_item_path(web, request_path)
+        item_base_url = lookup_item_base_url(identifier, None)
+        if item_base_url:
+            proxy_url = item_base_url + '/' + item_path
+            web.header('x-accel-redirect', "/xaccel/" + proxy_url)
+            return
         else:
             return 'Not found'
+
 
 if __name__ == "__main__":
     app.run()
