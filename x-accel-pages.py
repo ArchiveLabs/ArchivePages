@@ -10,9 +10,13 @@ app = web.application(urls, globals())
 config = dict(general=dict(secure=False))
 
 CUSTOM_DOMAINS = {
-    u'experiments.archivelab.org': u'ArchiveExperiments'
+    u'experiments.archivelab.org': u'ArchiveExperiments',
+    u'archiveexperiments.org': u'ArchiveExperiments',
+    u'www.archiveexperiments.org': u'ArchiveExperiments',
+    u'pagetest.rchrd.net': u'HelloWebpage',
+    u'gifcities.org': 'GifCities',
+    u'www.gifcities.org': 'GifCities',
 }
-
 
 # Note max_size is number of items, not item size
 @lru_cache_function(max_size=1024, expiration=15*60)
