@@ -16,6 +16,7 @@ CUSTOM_DOMAINS = {
     u'pagetest.rchrd.net': u'HelloWebpage',
     u'gifcities.org': 'GifCities',
     u'www.gifcities.org': 'GifCities',
+    u'blog.archivelab.org': 'blog-archivelab-org',
 }
 
 # Note max_size is number of items, not item size
