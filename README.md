@@ -9,7 +9,8 @@ A simple python script dynamically looks up the item path and passes this to the
 ## Provisioning/Deployment
 
 ```
-ansible-playbook provision/main.yml -i "123.123.123.123," -u username --ssh-extra-args='-o ForwardAgent=yes'
+cd provision
+ansible-playbook main.yml -i "123.123.123.123," -u username --ssh-extra-args='-o ForwardAgent=yes'
 ```
 
 

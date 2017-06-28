@@ -70,7 +70,7 @@ class hello:
             identifier = CUSTOM_DOMAINS[host]
             item_path = request_path
         elif host.endswith('.pages.archivelab.org'):
-            identifier = host[:host.index('.pages.archivelab.org')]  
+            identifier = host[:host.index('.pages.archivelab.org')]
             identifier = lookup_case_insensitive_identifier(identifier)
             item_path = request_path
         else:
@@ -97,3 +97,5 @@ class hello:
 if __name__ == "__main__":
     app.run()
 
+
+application = app.wsgifunc()

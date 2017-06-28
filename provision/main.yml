@@ -10,6 +10,8 @@
       - uwsgi
       - uwsgi-plugin-python
       - git
+    become: yes
+    become_method: sudo
 
   - name: create directories
     file:
@@ -31,3 +33,5 @@
 
   - name: restart supervisor
     command: service supervisor restart
+    become: yes
+    become_method: sudo
