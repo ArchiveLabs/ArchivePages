@@ -2,6 +2,13 @@ import web
 import internetarchive
 from lru import lru_cache_function
 
+
+def patched_init(self, app, prefix='/__static/'):
+    self.app = app
+    self.prefix = prefix
+
+web.httpserver.StaticMiddleware.__init__ = patched_init
+
 urls = (
     '/(.*)', 'hello'
 )
@@ -18,6 +25,7 @@ CUSTOM_DOMAINS = {
     u'www.gifcities.org': 'GifCities',
     u'blog.archivelab.org': 'blog-archivelab-org',
 }
+
 
 # Note max_size is number of items, not item size
 @lru_cache_function(max_size=1024, expiration=15*60)
@@ -56,12 +64,17 @@ def lookup_item_base_url(identifier, default):
 
 class hello:
     def get_identifier_and_item_path(self, web, request_path):
-        request_path = request_path.strip('/')
         host = web.ctx.env.get('HTTP_HOST')
+        print host
         if host in CUSTOM_DOMAINS:
             identifier = CUSTOM_DOMAINS[host]
             item_path = request_path
+        elif host.endswith('.pages.archivelab.org'):
+            identifier = host[:host.index('.pages.archivelab.org')]  
+            identifier = lookup_case_insensitive_identifier(identifier)
+            item_path = request_path
         else:
+            request_path = request_path.strip('/')
             parts = request_path.split('/')
             identifier = parts[0]
             identifier = lookup_case_insensitive_identifier(identifier)
@@ -83,3 +96,4 @@ class hello:
 
 if __name__ == "__main__":
     app.run()
+
