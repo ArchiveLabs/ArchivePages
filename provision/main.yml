@@ -1,0 +1,33 @@
+- hosts: all
+  tasks:
+  - name: Installs necessary packages
+    apt: pkg={{ item }}
+    with_items:
+      - python
+      - python-dev
+      - python-pip
+      - supervisor
+      - uwsgi
+      - uwsgi-plugin-python
+      - git
+
+  - name: create directories
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: 0755
+    with_items:
+      - /opt/apps
+
+  - name: copy configuration files
+    copy : src={{ item.src }} dest={{ item.dest }}
+    with_items:
+      - { src: 'app.conf', dest: '/etc/supervisor/conf.d/app.conf' }
+
+  - name: Deploy application from gitlab repo
+    git: repo=git@github.com:rchrd2/ArchivePages.git dest=/opt/apps/ArchivePages accept_hostkey=True
+    tags: deploy
+
+
+  - name: restart supervisor
+    command: service supervisor restart
